@@ -135,33 +135,53 @@
             <span class="text-[11px] text-slate-400" id="audio-duracion">Listo para grabar</span>
           </div>
 
-          <!-- Botón de Grabación con Micrófono Real -->
-          <div class="flex gap-2">
-            <button id="btn-mic" onclick="toggleGrabacionMic()" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs py-2.5 px-3 rounded-lg shadow-lg shadow-rose-600/30 flex items-center justify-center gap-2 transition-all">
-              <span id="mic-icon" class="w-2.5 h-2.5 rounded-full bg-white"></span>
-              <span id="mic-texto">🔴 Hablar por Micrófono (En Vivo)</span>
-            </button>
-            <label class="bg-white/10 hover:bg-white/20 text-white p-2.5 rounded-lg border border-white/20 cursor-pointer transition-all flex items-center justify-center" title="Subir archivo de audio (MP3, M4A, WAV)">
-              <i data-lucide="upload" class="w-4 h-4"></i>
-              <input type="file" id="input-audio-file" accept="audio/*" onchange="subirArchivoAudio(event)" class="hidden">
-            </label>
+          <!-- Botones de Control de Grabación Profesional -->
+          <div class="space-y-2">
+            <div class="flex gap-2">
+              <button id="btn-iniciar" onclick="iniciarGrabacion()" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs py-2.5 px-3 rounded-lg shadow-lg shadow-rose-600/30 flex items-center justify-center gap-2 transition-all">
+                <span class="w-2.5 h-2.5 rounded-full bg-white"></span>
+                <span id="txt-iniciar">🔴 Iniciar Grabación</span>
+              </button>
+              
+              <button id="btn-pausar" onclick="pausarReanudarGrabacion()" class="hidden bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs py-2.5 px-3 rounded-lg shadow-lg shadow-amber-600/30 flex items-center justify-center gap-1.5 transition-all">
+                <i data-lucide="pause" class="w-4 h-4"></i>
+                <span id="txt-pausar">Pausar</span>
+              </button>
+
+              <button id="btn-finalizar" onclick="finalizarYProcesar()" class="hidden bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2.5 px-3 rounded-lg shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-1.5 transition-all">
+                <i data-lucide="check-circle" class="w-4 h-4"></i>
+                <span>Finalizar y Guardar</span>
+              </button>
+
+              <label class="bg-white/10 hover:bg-white/20 text-white p-2.5 rounded-lg border border-white/20 cursor-pointer transition-all flex items-center justify-center shrink-0" title="Subir archivo de audio (MP3, M4A, WAV)">
+                <i data-lucide="upload" class="w-4 h-4"></i>
+                <input type="file" id="input-audio-file" accept="audio/*" onchange="subirArchivoAudio(event)" class="hidden">
+              </label>
+            </div>
+
+            <div class="flex items-center justify-between text-[11px] text-blue-200/80 px-1">
+              <span id="tiempo-cronometro">⏱ 00:00</span>
+              <button onclick="iniciarNuevaEntrevista()" class="hover:text-white flex items-center gap-1 underline text-[11px]">
+                <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> ➕ Siguiente Empleado / Limpiar
+              </button>
+            </div>
           </div>
 
           <!-- Texto Transcrito (En vivo o de muestra) -->
           <div class="relative">
-            <textarea id="transcripcion-texto" rows="5" class="w-full bg-slate-950/70 p-3 rounded-lg border border-white/10 text-xs text-slate-200 leading-relaxed focus:outline-none focus:ring-1 focus:ring-blue-400" placeholder="Acá aparecerá lo que hables por el micrófono o lo que cargues..."></textarea>
+            <textarea id="transcripcion-texto" rows="5" class="w-full bg-slate-950/70 p-3 rounded-lg border border-white/10 text-xs text-slate-200 leading-relaxed focus:outline-none focus:ring-1 focus:ring-blue-400" placeholder="Acá irá transcribiéndose todo lo que hables sin cortarse con las pausas..."></textarea>
             <span id="indicador-grabando" class="hidden absolute top-2 right-2 flex items-center gap-1 text-[10px] text-rose-400 bg-rose-950/80 px-2 py-0.5 rounded border border-rose-500/30 pulse-record">
-              <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span> Escuchando...
+              <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span> Grabando...
             </span>
           </div>
 
-          <!-- Botones de Acción -->
+          <!-- Botones de Acción Secundaria -->
           <div class="flex items-center gap-2 pt-1">
-            <button id="btn-procesar" onclick="procesarTextoActual()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs py-2.5 px-4 rounded-lg shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 transition-all">
-              <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i> Extraer y Guardar en la Base
+            <button id="btn-procesar" onclick="procesarTextoActual()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs py-2 px-4 rounded-lg shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 transition-all">
+              <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i> Reprocesar Texto Actual
             </button>
-            <button onclick="limpiarTexto()" class="bg-white/10 hover:bg-white/20 text-slate-300 p-2.5 rounded-lg border border-white/20 transition-all" title="Limpiar">
-              <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+            <button onclick="limpiarTexto()" class="bg-white/10 hover:bg-white/20 text-slate-300 p-2 rounded-lg border border-white/20 transition-all text-xs" title="Borrar texto">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
             </button>
           </div>
         </div>
@@ -683,9 +703,12 @@
       }
     };
 
-    // VARIABLES DE GRABACIÓN Y RECONOCIMIENTO DE VOZ
+    // VARIABLES DE GRABACIÓN PROFESIONAL Y RECONOCIMIENTO DE VOZ
     let recognition = null;
-    let grabando = false;
+    let estadoGrabacion = 'inactivo'; // 'grabando', 'pausado', 'inactivo'
+    let textoAcumulado = '';
+    let cronometroInterval = null;
+    let segundosGrabados = 0;
 
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -695,70 +718,154 @@
       recognition.lang = 'es-AR';
 
       recognition.onresult = (event) => {
-        let transcript = '';
+        let textoTemporal = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
-          transcript += event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            textoAcumulado += (textoAcumulado ? ' ' : '') + event.results[i][0].transcript;
+          } else {
+            textoTemporal += event.results[i][0].transcript;
+          }
         }
         const txtArea = document.getElementById("transcripcion-texto");
-        txtArea.value = transcript;
+        txtArea.value = textoAcumulado + (textoTemporal ? ' ' + textoTemporal : '');
+        txtArea.scrollTop = txtArea.scrollHeight;
       };
 
       recognition.onerror = (event) => {
-        console.error("Error reconocimiento voz:", event.error);
-        detenerGrabacionUI();
+        console.warn("Aviso reconocimiento voz:", event.error);
         if (event.error === 'not-allowed') {
-          alert("Permiso de micrófono denegado. Habilitá el micrófono en tu navegador para hablar directamente.");
+          alert("Permiso de micrófono denegado. Habilitá el micrófono en tu navegador para hablar.");
+          detenerGrabacionTotalUI();
         }
       };
 
+      // EVITA QUE SE CORTE CUANDO EL USUARIO HACE PAUSAS
       recognition.onend = () => {
-        detenerGrabacionUI();
+        if (estadoGrabacion === 'grabando') {
+          try {
+            recognition.start(); // Se reactiva solo automáticamente sin perder lo dicho
+          } catch (e) {
+            console.log("Reinicio de micrófono automático");
+          }
+        }
       };
     }
 
-    function toggleGrabacionMic() {
+    function actualizarCronometro() {
+      segundosGrabados++;
+      const mins = String(Math.floor(segundosGrabados / 60)).padStart(2, '0');
+      const secs = String(segundosGrabados % 60).padStart(2, '0');
+      document.getElementById("tiempo-cronometro").innerText = `⏱ ${mins}:${secs}`;
+    }
+
+    function iniciarGrabacion() {
       if (!recognition) {
-        alert("Tu navegador no soporta reconocimiento de voz nativo en vivo. Te recomendamos usar Google Chrome o Edge.");
+        alert("Tu navegador no soporta reconocimiento de voz nativo. Te recomendamos usar Google Chrome.");
         return;
       }
 
-      if (!grabando) {
-        try {
-          document.getElementById("transcripcion-texto").value = "";
-          recognition.start();
-          grabando = true;
-          document.getElementById("btn-mic").className = "flex-1 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs py-2.5 px-3 rounded-lg shadow-lg shadow-amber-600/30 flex items-center justify-center gap-2 transition-all";
-          document.getElementById("mic-texto").innerText = "⏹ Detener y Procesar";
-          document.getElementById("indicador-grabando").classList.remove("hidden");
-          document.getElementById("audio-duracion").innerText = "🔴 Grabando voz en vivo...";
-        } catch (e) {
-          console.error(e);
-        }
-      } else {
-        recognition.stop();
-        detenerGrabacionUI();
-        setTimeout(procesarTextoActual, 400);
+      try {
+        estadoGrabacion = 'grabando';
+        segundosGrabados = 0;
+        clearInterval(cronometroInterval);
+        cronometroInterval = setInterval(actualizarCronometro, 1000);
+
+        recognition.start();
+
+        // Control de UI
+        document.getElementById("btn-iniciar").classList.add("hidden");
+        document.getElementById("btn-pausar").classList.remove("hidden");
+        document.getElementById("btn-finalizar").classList.remove("hidden");
+        document.getElementById("txt-pausar").innerText = "Pausar";
+        document.getElementById("indicador-grabando").classList.remove("hidden");
+        document.getElementById("audio-duracion").innerText = "🔴 Grabando voz continuamente...";
+        lucide.createIcons();
+      } catch (e) {
+        console.error(e);
       }
     }
 
-    function detenerGrabacionUI() {
-      grabando = false;
-      document.getElementById("btn-mic").className = "flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs py-2.5 px-3 rounded-lg shadow-lg shadow-rose-600/30 flex items-center justify-center gap-2 transition-all";
-      document.getElementById("mic-texto").innerText = "🔴 Hablar por Micrófono (En Vivo)";
+    function pausarReanudarGrabacion() {
+      if (estadoGrabacion === 'grabando') {
+        estadoGrabacion = 'pausado';
+        try { recognition.stop(); } catch(e){}
+        clearInterval(cronometroInterval);
+        document.getElementById("txt-pausar").innerText = "Reanudar";
+        document.getElementById("btn-pausar").className = "bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-2.5 px-3 rounded-lg shadow-lg flex items-center justify-center gap-1.5 transition-all";
+        document.getElementById("indicador-grabando").classList.add("hidden");
+        document.getElementById("audio-duracion").innerText = "⏸ Grabación pausada";
+      } else if (estadoGrabacion === 'pausado') {
+        estadoGrabacion = 'grabando';
+        try { recognition.start(); } catch(e){}
+        cronometroInterval = setInterval(actualizarCronometro, 1000);
+        document.getElementById("txt-pausar").innerText = "Pausar";
+        document.getElementById("btn-pausar").className = "bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs py-2.5 px-3 rounded-lg shadow-lg flex items-center justify-center gap-1.5 transition-all";
+        document.getElementById("indicador-grabando").classList.remove("hidden");
+        document.getElementById("audio-duracion").innerText = "🔴 Grabando voz continuamente...";
+      }
+      lucide.createIcons();
+    }
+
+    function finalizarYProcesar() {
+      estadoGrabacion = 'inactivo';
+      clearInterval(cronometroInterval);
+      try { recognition.stop(); } catch(e){}
+
+      detenerGrabacionTotalUI();
+      document.getElementById("audio-duracion").innerText = `Entrevista finalizada (${document.getElementById("tiempo-cronometro").innerText})`;
+      
+      // Procesa el texto extraído
+      setTimeout(procesarTextoActual, 300);
+    }
+
+    function detenerGrabacionTotalUI() {
+      document.getElementById("btn-iniciar").classList.remove("hidden");
+      document.getElementById("btn-pausar").classList.add("hidden");
+      document.getElementById("btn-finalizar").classList.add("hidden");
       document.getElementById("indicador-grabando").classList.add("hidden");
-      document.getElementById("audio-duracion").innerText = "Audio capturado correctamente";
+      lucide.createIcons();
+    }
+
+    function iniciarNuevaEntrevista() {
+      estadoGrabacion = 'inactivo';
+      clearInterval(cronometroInterval);
+      try { recognition.stop(); } catch(e){}
+      detenerGrabacionTotalUI();
+
+      textoAcumulado = '';
+      segundosGrabados = 0;
+      document.getElementById("transcripcion-texto").value = "";
+      document.getElementById("tiempo-cronometro").innerText = "⏱ 00:00";
+      document.getElementById("audio-duracion").innerText = "Listo para nuevo empleado";
+      
+      // Limpia tarjeta superior a estado inicial
+      document.getElementById("f-nombre").innerText = "Esperando nueva entrevista...";
+      document.getElementById("f-dni").innerText = "-";
+      document.getElementById("f-domicilio").innerText = "-";
+      document.getElementById("f-puestoreal").innerText = "-";
+      document.getElementById("f-puestorecibo").innerText = "-";
+      document.getElementById("f-base").innerText = "-";
+      document.getElementById("f-celpersonal").innerText = "-";
+      document.getElementById("f-celempresa").innerText = "-";
+      document.getElementById("f-familiar").innerText = "-";
+      document.getElementById("f-dictamen").innerHTML = "Hacé clic en <strong>Iniciar Grabación</strong> y entrevistá a la persona.";
+      
+      const badge = document.getElementById("badge-estado");
+      badge.innerText = "NUEVA FICHA";
+      badge.className = "text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-slate-700 text-slate-200 border-slate-500";
     }
 
     function limpiarTexto() {
+      textoAcumulado = '';
       document.getElementById("transcripcion-texto").value = "";
-      document.getElementById("audio-duracion").innerText = "Listo para grabar";
     }
 
     function subirArchivoAudio(event) {
       const file = event.target.files[0];
       if (!file) return;
       document.getElementById("audio-duracion").innerText = `${file.name} (${(file.size/1024/1024).toFixed(1)} MB)`;
-      document.getElementById("transcripcion-texto").value = `[Audio cargado: ${file.name}] "Hola, soy el chofer Carlos Alberto Benítez, DNI 31.849.201, vivo en Berazategui calle 12 nro 450. Puesto en la empresa chofer de larga distancia pero en recibo figuro como peón. Celular personal 11-4455-6677, celular de empresa provisto Samsung A13. Correo carlitos@transporte.com. Casado con 2 hijos menores."`;
+      textoAcumulado = `[Audio cargado: ${file.name}] "Hola, soy el chofer Carlos Alberto Benítez, DNI 31.849.201, vivo en Berazategui calle 12 nro 450. Puesto en la empresa chofer de larga distancia pero en recibo figuro como peón. Celular personal 11-4455-6677, celular de empresa provisto Samsung A13. Correo carlitos@transporte.com. Casado con 2 hijos menores."`;
+      document.getElementById("transcripcion-texto").value = textoAcumulado;
       procesarTextoActual();
     }
 
@@ -766,11 +873,12 @@
       const sel = document.getElementById("audio-selector").value;
       const c = casosAudio[sel];
       document.getElementById("audio-duracion").innerText = c.duracion;
-      document.getElementById("transcripcion-texto").value = c.texto.replace(/^"|"$/g, '');
+      textoAcumulado = c.texto.replace(/^"|"$/g, '');
+      document.getElementById("transcripcion-texto").value = textoAcumulado;
       procesarTextoActual();
     }
 
-    // EXTRACCIÓN INTELIGENTE DE CUALQUIER TEXTO O VOZ
+    // EXTRACCIÓN INTELIGENTE Y ACTUALIZACIÓN POR DNI (EVITA DUPLICADOS)
     function procesarTextoActual() {
       const texto = document.getElementById("transcripcion-texto").value.trim();
       if (!texto) {
@@ -783,8 +891,9 @@
       lucide.createIcons();
 
       setTimeout(() => {
-        // Extracción con heurística y patrones
+        // DNI
         let dni = (texto.match(/\b\d{1,2}\.?\d{3}\.?\d{3}\b/) || ["30.000.000"])[0];
+        const dniLimpio = dni.replace(/\D/g, '');
         
         // Detección de Nombre
         let nombre = "Empleado Relevado";
@@ -867,33 +976,54 @@
           badge.className = "text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-emerald-500/30 text-emerald-200 border-emerald-400/40";
         }
 
-        // AGREGAR AL INICIO DE LA TABLA Y REFRESCAR KPIS
-        const nuevoEmp = {
-          id: datosEmpleados.length + 1,
-          nombre: nombre,
-          dni: dni,
-          domicilio: domicilio,
-          puestoReal: puestoReal,
-          puestoRecibo: puestoRecibo,
-          base: base,
-          celPersonal: celPersonal,
-          celEmpresa: celEmpresa,
-          email: `${nombre.toLowerCase().replace(/[^a-z]/g, '')}@empresa.com`,
-          redes: "Registrado por voz",
-          familiar: familiar,
-          estado: estado,
-          observaciones: dictamen.replace(/<[^>]*>/g, '')
-        };
+        // VERIFICAR SI YA EXISTE EL EMPLEADO POR SU DNI
+        const idxExistente = datosEmpleados.findIndex(e => e.dni.replace(/\D/g, '') === dniLimpio);
 
-        datosEmpleados.unshift(nuevoEmp);
-        renderTabla(datosEmpleados);
-        document.getElementById("kpi-total").innerText = datosEmpleados.length;
+        if (idxExistente !== -1 && dniLimpio !== "30000000") {
+          // ACTUALIZAR REGISTRO EXISTENTE SIN DUPLICAR
+          const emp = datosEmpleados[idxExistente];
+          emp.domicilio = domicilio !== "Domicilio a verificar" ? domicilio : emp.domicilio;
+          emp.puestoReal = puestoReal;
+          emp.puestoRecibo = puestoRecibo;
+          emp.base = base;
+          emp.celPersonal = celPersonal;
+          emp.celEmpresa = celEmpresa;
+          emp.familiar = familiar !== "Datos familiares declarados" ? familiar : emp.familiar;
+          emp.estado = estado;
+          emp.observaciones = `${emp.observaciones} | Actualización con 2do audio: ${dictamen.replace(/<[^>]*>/g, '')}`;
 
-        btn.innerHTML = `<i data-lucide="check" class="w-4 h-4 text-emerald-300"></i> Extraído y Guardado`;
+          renderTabla(datosEmpleados);
+          btn.innerHTML = `<i data-lucide="check-check" class="w-4 h-4 text-emerald-300"></i> Legajo #${emp.id} Actualizado`;
+          alert(`✅ ¡Legajo de ${emp.nombre} (DNI ${dni}) actualizado exitosamente con la nueva entrevista sin duplicarse!`);
+        } else {
+          // INSERTAR NUEVO EMPLEADO
+          const nuevoEmp = {
+            id: datosEmpleados.length + 1,
+            nombre: nombre,
+            dni: dni,
+            domicilio: domicilio,
+            puestoReal: puestoReal,
+            puestoRecibo: puestoRecibo,
+            base: base,
+            celPersonal: celPersonal,
+            celEmpresa: celEmpresa,
+            email: `${nombre.toLowerCase().replace(/[^a-z]/g, '')}@transporte.com`,
+            redes: "Registrado por voz",
+            familiar: familiar,
+            estado: estado,
+            observaciones: dictamen.replace(/<[^>]*>/g, '')
+          };
+
+          datosEmpleados.unshift(nuevoEmp);
+          renderTabla(datosEmpleados);
+          document.getElementById("kpi-total").innerText = datosEmpleados.length;
+          btn.innerHTML = `<i data-lucide="check" class="w-4 h-4 text-emerald-300"></i> Extraído y Guardado`;
+        }
+
         lucide.createIcons();
 
         setTimeout(() => {
-          btn.innerHTML = `<i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i> Extraer y Guardar en la Base`;
+          btn.innerHTML = `<i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i> Reprocesar Texto Actual`;
           lucide.createIcons();
         }, 2500);
 
