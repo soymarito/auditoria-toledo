@@ -20,25 +20,25 @@
 <body class="text-slate-800 antialiased min-h-screen flex flex-col">
 
   <!-- TOP BAR / HEADER -->
-  <header class="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 text-white shadow-xl sticky top-0 z-50">
+  <header class="bg-gradient-to-r from-slate-900 via-slate-950 to-blue-950 text-white shadow-xl sticky top-0 z-50 border-b border-blue-500/20">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row items-center justify-between gap-4">
       <div class="flex items-center gap-3">
-        <div class="bg-blue-600 p-2.5 rounded-xl shadow-lg shadow-blue-500/30 flex items-center justify-center">
-          <i data-lucide="shield-check" class="w-7 h-7 text-white"></i>
+        <div class="bg-blue-600 p-2.5 rounded-xl shadow-lg shadow-blue-500/30 flex items-center justify-center font-black tracking-wider text-base text-white border border-blue-400/40">
+          AVM
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <h1 class="text-lg md:text-xl font-bold tracking-tight">Estudio Jurídico Dr. Toledo & Asociados</h1>
+            <h1 class="text-lg md:text-xl font-bold tracking-tight">AVM Seguridad &bull; <span class="text-blue-400 font-semibold">División Auditorías</span></h1>
             <span class="bg-blue-500/30 text-blue-200 text-xs px-2.5 py-0.5 rounded-full border border-blue-400/30 font-medium">Módulo IA Activo</span>
           </div>
-          <p class="text-xs text-blue-200/80 font-normal">Auditoría Integral de Personal, Dotación y Puestos de Trabajo | Empresa de Transporte</p>
+          <p class="text-xs text-blue-200/80 font-normal">Auditoría Integral de Personal, Seguridad Patrimonial y Puestos de Trabajo &bull; <span class="text-white font-medium">Área Legal: Dr. Toledo</span></p>
         </div>
       </div>
       
       <div class="flex items-center gap-2">
         <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-          Base Conectada
+          Sistema En Línea
         </span>
         <button onclick="window.print()" class="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-lg border border-white/20 transition-all">
           <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Informe
@@ -706,7 +706,7 @@
     // VARIABLES DE GRABACIÓN PROFESIONAL Y RECONOCIMIENTO DE VOZ
     let recognition = null;
     let estadoGrabacion = 'inactivo'; // 'grabando', 'pausado', 'inactivo'
-    let textoAcumulado = '';
+    let textoBase = ''; // Guarda el texto firme sin duplicaciones
     let cronometroInterval = null;
     let segundosGrabados = 0;
 
@@ -714,21 +714,23 @@
       const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognition = new SpeechRec();
       recognition.continuous = true;
-      recognition.interimResults = true;
+      recognition.interimResults = false; // MÉTODO EXACTO DE DESCUBRE TU ELEMENTO: Evita resultados intermedios duplicados
       recognition.lang = 'es-AR';
 
       recognition.onresult = (event) => {
-        let textoTemporal = '';
+        let finalTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
-            textoAcumulado += (textoAcumulado ? ' ' : '') + event.results[i][0].transcript;
-          } else {
-            textoTemporal += event.results[i][0].transcript;
+            finalTranscript += event.results[i][0].transcript;
           }
         }
+
         const txtArea = document.getElementById("transcripcion-texto");
-        txtArea.value = textoAcumulado + (textoTemporal ? ' ' + textoTemporal : '');
-        txtArea.scrollTop = txtArea.scrollHeight;
+        if (txtArea && finalTranscript.trim()) {
+          const actual = txtArea.value.trim();
+          txtArea.value = (actual ? actual + ' ' : '') + finalTranscript.trim();
+          txtArea.scrollTop = txtArea.scrollHeight;
+        }
       };
 
       recognition.onerror = (event) => {
@@ -739,11 +741,10 @@
         }
       };
 
-      // EVITA QUE SE CORTE CUANDO EL USUARIO HACE PAUSAS
       recognition.onend = () => {
         if (estadoGrabacion === 'grabando') {
           try {
-            recognition.start(); // Se reactiva solo automáticamente sin perder lo dicho
+            recognition.start();
           } catch (e) {
             console.log("Reinicio de micrófono automático");
           }
@@ -770,6 +771,9 @@
         clearInterval(cronometroInterval);
         cronometroInterval = setInterval(actualizarCronometro, 1000);
 
+        // Toma como base lo que ya esté escrito en la caja de texto
+        textoBase = document.getElementById("transcripcion-texto").value.trim();
+
         recognition.start();
 
         // Control de UI
@@ -778,7 +782,7 @@
         document.getElementById("btn-finalizar").classList.remove("hidden");
         document.getElementById("txt-pausar").innerText = "Pausar";
         document.getElementById("indicador-grabando").classList.remove("hidden");
-        document.getElementById("audio-duracion").innerText = "🔴 Grabando voz continuamente...";
+        document.getElementById("audio-duracion").innerText = "🔴 Grabando voz limpiamente...";
         lucide.createIcons();
       } catch (e) {
         console.error(e);
@@ -790,18 +794,20 @@
         estadoGrabacion = 'pausado';
         try { recognition.stop(); } catch(e){}
         clearInterval(cronometroInterval);
+        textoBase = document.getElementById("transcripcion-texto").value.trim();
         document.getElementById("txt-pausar").innerText = "Reanudar";
         document.getElementById("btn-pausar").className = "bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-2.5 px-3 rounded-lg shadow-lg flex items-center justify-center gap-1.5 transition-all";
         document.getElementById("indicador-grabando").classList.add("hidden");
         document.getElementById("audio-duracion").innerText = "⏸ Grabación pausada";
       } else if (estadoGrabacion === 'pausado') {
         estadoGrabacion = 'grabando';
+        textoBase = document.getElementById("transcripcion-texto").value.trim();
         try { recognition.start(); } catch(e){}
         cronometroInterval = setInterval(actualizarCronometro, 1000);
         document.getElementById("txt-pausar").innerText = "Pausar";
         document.getElementById("btn-pausar").className = "bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs py-2.5 px-3 rounded-lg shadow-lg flex items-center justify-center gap-1.5 transition-all";
         document.getElementById("indicador-grabando").classList.remove("hidden");
-        document.getElementById("audio-duracion").innerText = "🔴 Grabando voz continuamente...";
+        document.getElementById("audio-duracion").innerText = "🔴 Grabando voz limpiamente...";
       }
       lucide.createIcons();
     }
@@ -832,7 +838,7 @@
       try { recognition.stop(); } catch(e){}
       detenerGrabacionTotalUI();
 
-      textoAcumulado = '';
+      textoBase = '';
       segundosGrabados = 0;
       document.getElementById("transcripcion-texto").value = "";
       document.getElementById("tiempo-cronometro").innerText = "⏱ 00:00";
@@ -856,7 +862,7 @@
     }
 
     function limpiarTexto() {
-      textoAcumulado = '';
+      textoBase = '';
       document.getElementById("transcripcion-texto").value = "";
     }
 
@@ -864,8 +870,8 @@
       const file = event.target.files[0];
       if (!file) return;
       document.getElementById("audio-duracion").innerText = `${file.name} (${(file.size/1024/1024).toFixed(1)} MB)`;
-      textoAcumulado = `[Audio cargado: ${file.name}] "Hola, soy el chofer Carlos Alberto Benítez, DNI 31.849.201, vivo en Berazategui calle 12 nro 450. Puesto en la empresa chofer de larga distancia pero en recibo figuro como peón. Celular personal 11-4455-6677, celular de empresa provisto Samsung A13. Correo carlitos@transporte.com. Casado con 2 hijos menores."`;
-      document.getElementById("transcripcion-texto").value = textoAcumulado;
+      textoBase = `[Audio cargado: ${file.name}] "Hola, soy el chofer Carlos Alberto Benítez, DNI 31.849.201, vivo en Berazategui calle 12 nro 450. Puesto en la empresa chofer de larga distancia pero en recibo figuro como peón. Celular personal 11-4455-6677, celular de empresa provisto Samsung A13. Correo carlitos@transporte.com. Casado con 2 hijos menores."`;
+      document.getElementById("transcripcion-texto").value = textoBase;
       procesarTextoActual();
     }
 
@@ -873,14 +879,26 @@
       const sel = document.getElementById("audio-selector").value;
       const c = casosAudio[sel];
       document.getElementById("audio-duracion").innerText = c.duracion;
-      textoAcumulado = c.texto.replace(/^"|"$/g, '');
-      document.getElementById("transcripcion-texto").value = textoAcumulado;
+      textoBase = c.texto.replace(/^"|"$/g, '');
+      document.getElementById("transcripcion-texto").value = textoBase;
       procesarTextoActual();
+    }
+
+    // LIMPIEZA INTELIGENTE DE FRASES REPETIDAS EN ANDROID
+    function sanitizarTexto(t) {
+      if (!t) return '';
+      // Limpia patrones de tartamudeo o repeticiones de la API de Google
+      let limpio = t.replace(/(.{4,30}?)\s+\1/gi, '$1');
+      limpio = limpio.replace(/(.{4,30}?)\s+\1/gi, '$1');
+      return limpio;
     }
 
     // EXTRACCIÓN INTELIGENTE Y ACTUALIZACIÓN POR DNI (EVITA DUPLICADOS)
     function procesarTextoActual() {
-      const texto = document.getElementById("transcripcion-texto").value.trim();
+      let texto = document.getElementById("transcripcion-texto").value.trim();
+      texto = sanitizarTexto(texto);
+      document.getElementById("transcripcion-texto").value = texto; // Limpia la pantalla
+
       if (!texto) {
         alert("Por favor grabá un audio o ingresá un texto para procesar.");
         return;
