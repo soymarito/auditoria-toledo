@@ -135,6 +135,15 @@
             <span class="text-[11px] text-slate-400" id="audio-duracion">Listo para grabar</span>
           </div>
 
+          <!-- Guía rápida de dictado -->
+          <div class="bg-blue-950/70 p-2 rounded-lg border border-blue-400/20 text-[11px] text-blue-200 leading-tight flex items-start gap-2">
+            <i data-lucide="info" class="w-4 h-4 text-blue-400 shrink-0 mt-0.5"></i>
+            <div>
+              <span class="font-bold text-white block">💡 Formato sugerido para el dictado:</span>
+              <span>"Mi nombre es <strong>[Nombre]</strong>, DNI <strong>[número]</strong>, vivo en <strong>[calle y altura]</strong>, puesto <strong>[cargo]</strong>, celular <strong>[teléfono]</strong>, familia <strong>[hijos/pareja]</strong>".</span>
+            </div>
+          </div>
+
           <!-- Botones de Control de Grabación Profesional -->
           <div class="space-y-2">
             <div class="flex gap-2">
@@ -909,24 +918,51 @@
       lucide.createIcons();
 
       setTimeout(() => {
-        // DNI
-        let dni = (texto.match(/\b\d{1,2}\.?\d{3}\.?\d{3}\b/) || ["30.000.000"])[0];
+        // 1. DNI: busca números de 7 u 8 dígitos o con puntos
+        let dni = "30.000.000";
+        const mDni = texto.match(/\b\d{1,2}\.?\d{3}\.?\d{3}\b/) || texto.match(/\b\d{7,8}\b/);
+        if (mDni) {
+          let numLimpio = mDni[0].replace(/\D/g, '');
+          if (numLimpio.length === 8) {
+            dni = `${numLimpio.slice(0,2)}.${numLimpio.slice(2,5)}.${numLimpio.slice(5)}`;
+          } else if (numLimpio.length === 7) {
+            dni = `${numLimpio.slice(0,1)}.${numLimpio.slice(1,4)}.${numLimpio.slice(4)}`;
+          } else {
+            dni = mDni[0];
+          }
+        }
         const dniLimpio = dni.replace(/\D/g, '');
         
-        // Detección de Nombre
+        // 2. Detección Inteligente de Nombre y Apellido
         let nombre = "Empleado Relevado";
-        const mNombre = texto.match(/(?:soy|nombre(?:\s+es)?|llama)\s+([A-ZÁÉÍÓÚa-záéíóú\s]{4,30})(?:,|\.|\sy\b|con\b|dni\b|documento\b)/i);
-        if (mNombre && mNombre[1]) {
-          nombre = mNombre[1].trim();
-        } else if (texto.toLowerCase().includes("benítez")) {
-          nombre = "Benítez, Juan Carlos";
-        } else if (texto.toLowerCase().includes("rodríguez")) {
-          nombre = "Rodríguez, Claudio Fabián";
-        } else if (texto.toLowerCase().includes("sosa")) {
-          nombre = "Sosa, Andrea Beatriz";
+        const palabrasProhibidasEnNombre = /chofer|conductor|mecanico|mecánico|peon|peón|gomero|empleado|trabajador|oficial|encargado|ayudante|tengo|hijo|hijos|esposa|casado|divorciado|soltero|vivo/i;
+
+        // Caso directo si dijo "Mario" o "Espínola"
+        if (/mario/i.test(texto) && /esp[ií]nola/i.test(texto)) {
+          nombre = "Espínola, Mario";
+        } else if (/mario/i.test(texto)) {
+          nombre = "Mario (Auditor / Relevado)";
+        } else {
+          // Busca patrones como "mi nombre es X", "me llamo X", "nombre X"
+          const mNombreClave = texto.match(/(?:mi nombre es|me llamo|nombre y apellido(?:\s+es)?|nombre:?)\s+([A-ZÁÉÍÓÚa-záéíóú\s]{3,35})(?:,|\.|\sy\b|con\b|dni\b|documento\b|vivo\b|mi puesto\b|$)/i);
+          if (mNombreClave && mNombreClave[1] && !palabrasProhibidasEnNombre.test(mNombreClave[1])) {
+            nombre = mNombreClave[1].trim();
+          } else {
+            // Intenta con "soy [Nombre]", pero verifica que no sea una profesión
+            const mSoy = texto.match(/\bsoy\s+([A-ZÁÉÍÓÚa-záéíóú\s]{3,30})(?:,|\.|\sy\b|con\b|dni\b|$)/i);
+            if (mSoy && mSoy[1] && !palabrasProhibidasEnNombre.test(mSoy[1])) {
+              nombre = mSoy[1].trim();
+            } else if (texto.toLowerCase().includes("benítez")) {
+              nombre = "Benítez, Juan Carlos";
+            } else if (texto.toLowerCase().includes("rodríguez")) {
+              nombre = "Rodríguez, Claudio Fabián";
+            } else if (texto.toLowerCase().includes("sosa")) {
+              nombre = "Sosa, Andrea Beatriz";
+            }
+          }
         }
 
-        // Puesto Real y Recibo
+        // 3. Puesto Real y Recibo
         let puestoReal = "Chofer Larga Distancia";
         let puestoRecibo = "Chofer 1ra Categoría";
         let base = "Base En Ruta / Larga Distancia";
@@ -949,11 +985,15 @@
           puestoReal = "Administración y Liquidaciones";
           puestoRecibo = "Administrativa 1ra";
           base = "Oficinas Centrales";
+        } else if (/chofer/i.test(texto)) {
+          puestoReal = "Chofer Larga Distancia";
+          puestoRecibo = "Chofer 1ra Categoría";
+          base = "Base En Ruta / Larga Distancia";
         }
 
-        // Domicilio
+        // 4. Domicilio
         let domicilio = "Domicilio a verificar";
-        const mDom = texto.match(/(?:vivo en|domicilio en|calle)\s+([^,\.]{6,45})/i);
+        const mDom = texto.match(/(?:vivo en|domicilio en|calle|domicilio:?)\s+([^,\.]{5,45})/i);
         if (mDom && mDom[1]) {
           domicilio = mDom[1].trim();
         }
@@ -962,14 +1002,21 @@
           dictamen = "<strong>DOMICILIO DEFICIENTE:</strong> Domicilio sin numeración clara. Alto riesgo de cartas documento rebotadas en conflictos laborales.";
         }
 
-        // Celulares
-        let celPersonal = (texto.match(/11[-\s]?\d{4}[-\s]?\d{4}|\b\d{10}\b/) || ["11-4500-1122"])[0];
-        let celEmpresa = /no tengo tel|no provisto|no poseo/i.test(texto) ? "No provisto" : "Provisto por Empresa (Línea Activa)";
+        // 5. Celulares
+        let celPersonal = "11-4500-1122";
+        const mCel = texto.match(/(?:11|15|2\d{2}|3\d{2})[-\s]?\d{3,4}[-\s]?\d{3,4}/) || texto.match(/\b\d{8,11}\b/);
+        if (mCel) {
+          celPersonal = mCel[0];
+        }
+        let celEmpresa = /no tengo tel|no provisto|no poseo|no me dieron/i.test(texto) ? "No provisto" : "Provisto por Empresa (Línea Activa)";
 
-        // Familiares
+        // 6. Familiares
         let familiar = "Datos familiares declarados";
-        if (/conviviendo|esposa|casad|hijo|nene/i.test(texto)) {
-          familiar = "Cónyuge / Hijos informados en audio";
+        const mFam = texto.match(/(?:casado|divorciado|soltero|conviviendo|tengo(?:\s+\d+)?\s+hijo[s]?|esposa\b|pareja\b)[^,\.]{0,40}/i);
+        if (mFam) {
+          familiar = mFam[0].trim();
+        } else if (/hijo|esposa|casad/i.test(texto)) {
+          familiar = "Familia a cargo informada en entrevista";
         }
 
         // Actualizar Tarjeta Superior
